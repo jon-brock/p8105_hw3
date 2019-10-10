@@ -7,7 +7,7 @@ output:
         toc_depth: 2
 ---
 
-> *QUOTE PENDING*
+> *"Die Grenzen meiner Sprache bedeuten die Grenzen meiner Welt."" - Ludwig Wittgenstein, Tractatus Logico-Philosophicus*
 
 ```{r load_packages, message = FALSE}
 library(tidyverse)
@@ -17,33 +17,120 @@ library(tidyverse)
 
 ## Problem #1
 ###### (*25 points*)
-##### *ASSIGNMENT DESCRIPTION*
+##### *Exploration of the Instacart Data*
+
+The following code imports the `instacart` dataset from the courses' `p8105.datasets` github site. As we all know, Instacart is the online service that allows consumers to order grocery items from a store of their choosing, have someone pull the items from the shelf, bag them, and either deliver them or set them aside for fast and easy pickup.
+
+Given how massive the dataset is for this problem, we are going to pull it from the `p8105.datasets` library and assign it as the `instacart` tibble, as well as remove an unnecessary column `eval_set`.
 
 ```{r generate_tibble_from_source_data_instacart}
-instacart <- as_tibble(p8105.datasets::instacart)
+instacart <- as_tibble(p8105.datasets::instacart) %>% 
+    select(-eval_set)
 ```
+
+The dataset `instacart` has `r ncol(instacart)` variables. There are variables that are specific to the items, such as `product_id`, `department`, `product_name`, and `aisle`. There are also variables that are specific to the consumer, such as `reordered`, `user_id`, `days_since_prior_order`, and `order_dow`.  This dataset has `r instacart %>% distinct(user_id) %>% count()` unique customers.
+
+
+```{r high_order_aisles}
+instacart %>% 
+    group_by(aisle) %>% 
+    summarise(aisle_count = n()) %>% 
+    arrange(desc(aisle_count))
+```
+
+As we can see from our previous code chunk, there are `r instacart %>% distinct(aisle) %>% count()` aisles.
+And the top five aisles from which items are ordered are:
+
+1. fresh vegetables  
+1. fresh fruits  
+1. packaged vegetable fruits  
+1. yogurt  
+1. packaged cheese  
+
+```{r instacart_aisle_plot, fig.align = 'center'}
+instacart %>% #CODE CHUNK COMPLETED
+    group_by(aisle) %>% 
+    summarize(aisle_count = n()) %>% 
+    filter(aisle_count > 10000) %>% 
+    arrange(desc(aisle)) %>% 
+    ggplot(aes(x = aisle_count, y = reorder(aisle, desc(aisle)))) +
+        geom_point() +
+        labs(
+            title = "Most Ordered Item Categories via Instacart",
+            x = "Number of Items Ordered",
+            y = "Aisle")
+```
+
+
+```{r table_popular_aisle_items, eval = FALSE}
+instacart %>% 
+    filter(aisle == c("baking ingredients", "dog food care", "packaged vegetables fruits")) %>% 
+    group_by(aisle, product_name) %>% 
+    select(aisle, product_name, everything()) %>% 
+    count(product_name)
+
+    summarize(product_name = n()) %>% 
+    
+    group_by(product_name, aisle_count) %>% 
+    summarize(product_name) %>% 
+    pivot_wider(
+        names_from = "aisle",
+        values_from = "aisle_count") %>% 
+    knitr::kable(align = 'c')
+```
+
+
+```{r TEST CODE, eval=FALSE}
+instacart %>% 
+    group_by(user_id, order_id) %>% 
+    select(order_id, user_id, everything())
+```
+
 
 ***
 
 ## Problem #2
 ###### (*25 points*)
-##### *ASSIGNMENT DESCRIPTION*
+##### *Exploration of the Behavioral Risk Factors Surveillance System Data*
+
+The following code imports the `brfss` dataset from the courses' `p8105.datasets` github site. We clean the column/variable names; filter the dataset down to only the `"Overall Health"` topic; and coerce and relevel the `response` (character) variable into a factor variable with reordered factors going from `"Poor"` to "`Excellent"`.
 
 ```{r generate_tibble_from_source_data_brfss}
-brfss <- as_tibble(p8105.datasets::brfss_smart2010)
+brfss <- as_tibble(p8105.datasets::brfss_smart2010) %>% 
+    janitor::clean_names() %>% 
+    filter(topic == "Overall Health") %>% 
+    mutate(
+        response = fct_relevel(response, c("Poor", "Fair", "Good", "Very good", "Excellent")),
+        county = str_to_lower(str_sub(locationdesc, 5, -1))) %>% 
+    rename(
+        data_value_pct = data_value,
+        state = locationabbr,
+        cl_lower = confidence_limit_low,
+        cl_upper = confidence_limit_high) %>% 
+    select(year, state, county, response, sample_size, data_value_pct, respid, geo_location) %>% 
+    view()
 ```
+
+```{r}
+
+```
+
 
 ***
 
 ## Problem #3
 ###### (*25 points*)
-##### *ASSIGNMENT DESCRIPTION*
+##### *Exploration of Accelerometer Data from a 63 Year-Old Male with BMI 25*
 
 ```{r import_data_accelerometer, message = FALSE}
 accel_data <- read_csv("./data/accel_data.csv")
+    
 ```
 
 ***
 
 ## Bonus Content
 
+> "Oh, so you think darkness is your ally? But you merely adopted the dark. I was born in it, molded by it." -[Bane Cat.](https://youtu.be/5ywjpbThDpE)  
+
+<center> ![](bane_cat.jpg) </center>
