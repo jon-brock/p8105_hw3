@@ -24,6 +24,7 @@ The following code imports the `instacart` dataset from the courses' `p8105.data
 Given how massive the dataset is for this problem, we are going to pull it from the `p8105.datasets` library and assign it as the `instacart` tibble, as well as remove an unnecessary column `eval_set`.
 
 ```{r generate_tibble_from_source_data_instacart}
+#CODE CHUNK COMPLETED
 instacart <- as_tibble(p8105.datasets::instacart) %>% 
     select(-eval_set)
 ```
@@ -32,6 +33,7 @@ The dataset `instacart` has `r ncol(instacart)` variables. There are variables t
 
 
 ```{r high_order_aisles}
+#CODE CHUNK COMPLETED
 instacart %>% 
     group_by(aisle) %>% 
     summarise(aisle_count = n()) %>% 
@@ -48,7 +50,8 @@ And the top five aisles from which items are ordered are:
 1. packaged cheese  
 
 ```{r instacart_aisle_plot, fig.align = 'center'}
-instacart %>% #CODE CHUNK COMPLETED
+#CODE CHUNK COMPLETED
+instacart %>%
     group_by(aisle) %>% 
     summarize(aisle_count = n()) %>% 
     filter(aisle_count > 10000) %>% 
@@ -63,6 +66,7 @@ instacart %>% #CODE CHUNK COMPLETED
 
 
 ```{r table_popular_aisle_items, eval = FALSE}
+#WORKING CODE = NOT COMPLETED
 instacart %>% 
     filter(aisle == c("baking ingredients", "dog food care", "packaged vegetables fruits")) %>% 
     group_by(aisle, product_name) %>% 
@@ -98,12 +102,13 @@ The following code imports the `brfss` dataset from the courses' `p8105.datasets
 **Dataset of how many people rated their "general health" as** `Poor`, `Fair`, `Good`, `Very good`, **or** `Excellent` **within each county and state.**
 
 ```{r generate_tibble_from_source_data_brfss}
+#CODE CHUNK COMPLETED
 brfss <- as_tibble(p8105.datasets::brfss_smart2010) %>% 
     janitor::clean_names() %>% 
     filter(topic == "Overall Health") %>% 
     mutate(
         response = fct_relevel(response, c("Poor", "Fair", "Good", "Very good", "Excellent")),
-        county = str_to_lower(str_sub(locationdesc, 5, -1)),
+        county = str_to_lower(str_sub(locationdesc, 6, -1)),
         lat = str_sub(geo_location, 2, 10),
         lng = str_sub(geo_location, 13, 22)) %>% 
     rename(
@@ -120,15 +125,21 @@ As such, I removed the leading state abbreviations from `locationdesc` and renam
 
 (Bonus: though it wasn't asked for, I split the `geo_location` variable into its two requisite parts: `lat` and `lng`. Though, I do see that for some observations, the last digit of the longitude value is truncated. It maps the same location regardless.)
 
-```{r eval = FALSE}
-#WORKING CODE - NOT COMPLETED
+```{r plot_of_excellent_health_self_assessment_by_state, warning = FALSE, fig.align = "center"}
+#CODE CHUNK COMPLETED
 brfss %>% 
-    filter(year == 2002) %>% 
-    group_by(county) %>% 
-    count(state)
-
+    filter(response == "Excellent") %>% 
+    group_by(year, state) %>% 
+    summarize(
+        mean_pct = mean(data_value_pct)) %>% 
+    ggplot(
+        aes(x = year, y = mean_pct, group = state, colour = state)) +
+        geom_line() +
+        labs(
+            title = "Longitudinal View of Self-Assessed Health Status",
+            x = "Year",
+            y = "Mean % of People Indicating 'Excellent' Overall Health")
 ```
-
 
 ***
 
@@ -148,3 +159,23 @@ accel_data <- read_csv("./data/accel_data.csv")
 > "Oh, so you think darkness is your ally? But you merely adopted the dark. I was born in it, molded by it." -[Bane Cat.](https://youtu.be/5ywjpbThDpE)  
 
 <center> ![](bane_cat.jpg) </center>
+
+
+
+
+
+```{r, eval = FALSE}
+instacart %>%
+    group_by(aisle) %>% 
+    summarize(aisle_count = n()) %>% 
+    filter(aisle_count > 10000) %>% 
+    arrange(desc(aisle)) %>% 
+    ggplot(aes(x = aisle)) +
+        geom_bar() +
+        coord_flip() +
+        labs(
+            title = "Most Ordered Item Categories via Instacart",
+            x = "Number of Items Ordered",
+            y = "Aisle")
+```
+
