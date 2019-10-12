@@ -49,20 +49,20 @@ And the top five aisles from which items are ordered are:
 1. yogurt  
 1. packaged cheese  
 
-```{r instacart_aisle_plot, fig.align = 'center'}
+```{r instacart_aisle_plot, fig.width = 7, fig.height = 7, dpi = 200, fig.align = 'center'}
 #CODE CHUNK COMPLETED
 instacart %>%
     group_by(aisle) %>% 
     summarize(aisle_count = n()) %>% 
-    filter(aisle_count > 10000) %>% 
-    arrange(desc(aisle)) %>% 
-    ggplot(aes(x = aisle_count, y = reorder(aisle, desc(aisle)))) +
-        geom_point() +
+    filter(aisle_count > 10000) %>%
+    ggplot() +
+        geom_col(aes(x = aisle_count, y = reorder(aisle, -aisle_count))) + 
         labs(
             title = "Most Ordered Item Categories via Instacart",
             x = "Number of Items Ordered",
             y = "Aisle")
 ```
+
 
 
 ```{r table_popular_aisle_items, eval = FALSE}
@@ -159,23 +159,3 @@ accel_data <- read_csv("./data/accel_data.csv")
 > "Oh, so you think darkness is your ally? But you merely adopted the dark. I was born in it, molded by it." -[Bane Cat.](https://youtu.be/5ywjpbThDpE)  
 
 <center> ![](bane_cat.jpg) </center>
-
-
-
-
-
-```{r, eval = FALSE}
-instacart %>%
-    group_by(aisle) %>% 
-    summarize(aisle_count = n()) %>% 
-    filter(aisle_count > 10000) %>% 
-    arrange(desc(aisle)) %>% 
-    ggplot(aes(x = aisle)) +
-        geom_bar() +
-        coord_flip() +
-        labs(
-            title = "Most Ordered Item Categories via Instacart",
-            x = "Number of Items Ordered",
-            y = "Aisle")
-```
-
