@@ -7,7 +7,7 @@ output:
         toc_depth: 2
 ---
 
-> *"Die Grenzen meiner Sprache bedeuten die Grenzen meiner Welt."" - Ludwig Wittgenstein, Tractatus Logico-Philosophicus*
+> *"Die Grenzen meiner Sprache bedeuten die Grenzen meiner Welt." - Ludwig Wittgenstein, Tractatus Logico-Philosophicus*
 
 ```{r load_packages, message = FALSE}
 library(tidyverse)
@@ -22,18 +22,20 @@ library(lubridate)
 
 The following code imports the `instacart` dataset from the courses' `p8105.datasets` github site. As we all know, Instacart is the online service that allows consumers to order grocery items from a store of their choosing, have someone pull the items from the shelf, bag them, and either deliver them or set them aside for fast and easy pickup.
 
-Given how massive the dataset is for this problem, we are going to pull it from the `p8105.datasets` library and assign it as the `instacart` tibble, as well as remove an unnecessary column `eval_set`.
+Given how massive the dataset is for this problem, we are going to pull it from the `p8105.datasets` library and assign it as the `instacart` tibble, as well as remove an unnecessary column `eval_set`.  
+
+*Note: Despite the instructions to load the `instacart` dataset via `library(p8105.datasets)` I opted to use an equivalent method to which I am partial. I hope this does not result in any lost points.*
 
 ```{r generate_tibble_from_source_data_instacart}
-#CODE CHUNK COMPLETED
 instacart <- as_tibble(p8105.datasets::instacart) %>% 
     select(-eval_set)
 ```
 
+***
+
 The dataset `instacart` has `r ncol(instacart)` variables. There are variables that are specific to the items, such as `product_id`, `department`, `product_name`, and `aisle`. There are also variables that are specific to the consumer, such as `reordered`, `user_id`, `days_since_prior_order`, and `order_dow`.  This dataset has `r instacart %>% distinct(user_id) %>% count()` unique customers.
 
 ```{r high_order_aisles}
-#CODE CHUNK COMPLETED
 instacart %>% 
     group_by(aisle) %>% 
     summarise(aisle_count = n()) %>% 
@@ -49,8 +51,11 @@ And the top five aisles from which items are ordered are:
 1. yogurt  
 1. packaged cheese  
 
-```{r instacart_aisle_plot, fig.width = 7, fig.height = 7, dpi = 200, fig.align = 'center'}
-#CODE CHUNK COMPLETED
+***
+
+We can get a graphical representation of the top aisles ordered from using the following code and interpreting the generated graphic.  
+
+```{r instacart_aisle_plot, fig.width = 9, fig.asp = 0.687, dpi = 200, fig.align = 'center'}
 instacart %>%
     group_by(aisle) %>% 
     summarize(aisle_count = n()) %>% 
@@ -63,10 +68,11 @@ instacart %>%
             y = "Aisle")
 ```
 
+***
+
 The following code chunk involves several steps, so I assigned it to its own tibble (`insta_top_product_tbl`). We sought to find the most ordered item from three specified aisles: `baking ingredients`, `dog food care`, and `packaged vegetables fruits`. As such, this particular code chunk merely prepares us for generating the required table.
 
 ```{r generate_top_product_tibble}
-#CODE CHUNK COMPLETED (TIME PERMITTING, SEE IF YOU CAN CLEAN IT UP A LITTLE)
 insta_top_product_tbl <-
     instacart %>% 
     select(aisle, product_name) %>% 
@@ -91,31 +97,30 @@ insta_top_product_tbl %>%
     knitr::kable()
 ```
 
-STEPS (NOT IN ORDER):
-    Variables needed for this: product_name, order_dow, order_hour_of_day
-    GROUP BY 'order_dow' for the days of week
-    AS.FACTOR 'order_dow' / relevel the variable to be days of week
-    FILTER == "Pink Lady Apples" and "Coffee Ice Cream"
-    Calculate the mean value of 'hour_of"day'
-    CREATE knitr::kable table
+***
 
-```{r}
+Next, we want to know what the mean hour time is for when customers purchase either `Pink Lady Apples` or `Coffee Ice Cream` -- yummy!
+
+```{r mean_order_time_for_specified_products}
 instacart %>% 
     select(product_name, order_dow, order_hour_of_day) %>% 
     filter(product_name %in% c("Pink Lady Apples", "Coffee Ice Cream")) %>% 
-    mutate(dow = wday(order_dow, label = TRUE, abbr = FALSE)) %>% 
+    mutate(
+        order_dow = order_dow + 1,
+        dow = wday(order_dow, label = TRUE, abbr = FALSE)) %>% 
     group_by(product_name, dow) %>% 
     arrange(product_name, dow) %>% 
     select(product_name, dow, everything()) %>% 
-    summarize(mean(order_hour_of_day)) %>% 
+    summarize(
+        mean_hour = as.integer(mean(order_hour_of_day))) %>% 
     pivot_wider(
         names_from = "dow",
-        values_from = "mean(order_hour_of_day)") %>% 
-    knitr::kable()
-    
+        values_from = "mean_hour") %>% 
+    rename("Product" = product_name) %>% 
+    knitr::kable(align = 'c')
 ```
 
-
+Our findings are presented in 24-hour time, which is a terribly underutilized method of time keeping. There can never be any ambiguity! None of this, "I set my alarm for 7:00 p.m. instead of 7:00 a.m., and that's why I'm late for work" nonsense. 19:00 is 19:00. Bam! Anyway, I digress. Our data indicate that around the middle of the week customers tend to order `Coffee Ice Cream` around 15:00, whereas `Pink Lady Apples` are typically ordered around 11:00 during the week.
 
 ***
 
