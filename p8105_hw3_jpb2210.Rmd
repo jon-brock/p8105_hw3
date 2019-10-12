@@ -11,6 +11,7 @@ output:
 
 ```{r load_packages, message = FALSE}
 library(tidyverse)
+library(lubridate)
 ```
 
 ***
@@ -30,7 +31,6 @@ instacart <- as_tibble(p8105.datasets::instacart) %>%
 ```
 
 The dataset `instacart` has `r ncol(instacart)` variables. There are variables that are specific to the items, such as `product_id`, `department`, `product_name`, and `aisle`. There are also variables that are specific to the consumer, such as `reordered`, `user_id`, `days_since_prior_order`, and `order_dow`.  This dataset has `r instacart %>% distinct(user_id) %>% count()` unique customers.
-
 
 ```{r high_order_aisles}
 #CODE CHUNK COMPLETED
@@ -64,9 +64,10 @@ instacart %>%
 ```
 
 
-
 ```{r table_popular_aisle_items, eval = FALSE}
 #WORKING CODE = NOT COMPLETED
+#Make a table showing the three most popular items in each of the aisles “baking ingredients”, “dog food care”, and “packaged vegetables fruits”. Include the number of times each item is ordered in your table.
+
 instacart %>% 
     filter(aisle == c("baking ingredients", "dog food care", "packaged vegetables fruits")) %>% 
     group_by(aisle, product_name) %>% 
@@ -85,9 +86,9 @@ instacart %>%
 
 
 ```{r TEST CODE, eval=FALSE}
-instacart %>% 
-    group_by(user_id, order_id) %>% 
-    select(order_id, user_id, everything())
+#Make a table showing the mean hour of the day at which Pink Lady Apples and Coffee Ice Cream are ordered on each day of the week; format this table for human readers (i.e. produce a 2 x 7 table).
+
+
 ```
 
 
@@ -125,7 +126,7 @@ As such, I removed the leading state abbreviations from `locationdesc` and renam
 
 (Bonus: though it wasn't asked for, I split the `geo_location` variable into its two requisite parts: `lat` and `lng`. Though, I do see that for some observations, the last digit of the longitude value is truncated. It maps the same location regardless.)
 
-```{r plot_of_excellent_health_self_assessment_by_state, warning = FALSE, fig.align = "center"}
+```{r brfss_plot_1, warning = FALSE, , fig.width = 7, fig.height = 5, dpi = 200, fig.align = 'center'}
 #CODE CHUNK COMPLETED
 brfss %>% 
     filter(response == "Excellent") %>% 
@@ -136,7 +137,8 @@ brfss %>%
         aes(x = year, y = mean_pct, group = state, colour = state)) +
         geom_line() +
         labs(
-            title = "Longitudinal View of Self-Assessed Health Status",
+            title = "Self-Perceived 'Overall Health' Status",
+            subtitle = "US states average between 17.5 and 27.5% for years 2002-2010",
             x = "Year",
             y = "Mean % of People Indicating 'Excellent' Overall Health")
 ```
