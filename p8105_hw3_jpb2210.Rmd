@@ -132,6 +132,8 @@ The following code imports the `brfss` dataset from the courses' `p8105.datasets
 
 **Dataset of how many people rated their "general health" as** `Poor`, `Fair`, `Good`, `Very good`, **or** `Excellent` **within each county and state.**
 
+*Note: Again, I loaded the dataset `brfss_smart2010` using the same process as I did in Problem #1.*
+
 ```{r generate_tibble_from_source_data_brfss}
 #CODE CHUNK COMPLETED
 brfss <- as_tibble(p8105.datasets::brfss_smart2010) %>% 
@@ -156,8 +158,41 @@ As such, I removed the leading state abbreviations from `locationdesc` and renam
 
 (Bonus: though it wasn't asked for, I split the `geo_location` variable into its two requisite parts: `lat` and `lng`. Though, I do see that for some observations, the last digit of the longitude value is truncated. It maps the same location regardless.)
 
-```{r brfss_plot_1, warning = FALSE, , fig.width = 7, fig.height = 5, dpi = 200, fig.align = 'center'}
+***
+
+The following code answers the question: "In **2002**, which states were observed at 7 or more locations?"  
+
+```{r observation_numbers_by_location_2002}
 #CODE CHUNK COMPLETED
+brfss %>% 
+    filter(year == "2002") %>% 
+    group_by(state) %>%
+    summarize(locations = n_distinct(county)) %>% 
+    filter(locations >= 7)
+```
+
+The answer: `CT` (Connecticut), `FL` (Florida), `MA` (Massachusetts), `NC` (North Carolina), `NJ` (New Jersey), and `PA` (Pennsylvania).  
+
+***
+
+The following code answers the question: "In **2010**, which states were observed at 7 or more locations?" 
+
+```{r observation_numbers_by_location_2010}
+#CODE CHUNK COMPLETED
+brfss %>% 
+    filter(year == "2010") %>% 
+    group_by(state) %>%
+    summarize(locations = n_distinct(county)) %>% 
+    filter(locations >= 7)
+```
+
+The answer: `CA` (California), `CO` (Colorado), `FL` (Florida), `MA` (Massachusetts), `MD` (Maryland), `NC` (North Carolina), `NE` (Nebraska), `NJ` (New Jersey), `NY` (New York), `OH` (Ohio), `PA` (Pennsylvania), `SC` (South Carolina), `TX` (Texas), and `WA` (Washington -- **my home state!**).  
+
+***
+
+The following code generates a plot that shows the time trends of the percent of people within each state responding with `Excellent` when asked how they perceive their overall health.  
+
+```{r brfss_plot_1, warning = FALSE, fig.width = 8, fig.height = 6, dpi = 200, fig.align = 'center'}
 brfss %>% 
     filter(response == "Excellent") %>% 
     group_by(year, state) %>% 
@@ -172,6 +207,36 @@ brfss %>%
             x = "Year",
             y = "Mean % of People Indicating 'Excellent' Overall Health")
 ```
+
+As we can see from the generated graphic, the mean percentage of people indicating `Excellent` overall health across all US states falls between ~12% at the lowest point and ~29% at the highest. However, there is a high density of mean percentages that fall between 17.5% and 27.5%. Come on, America, we can do better!
+
+***
+
+The following code generates comparative plots (by years `2006` and `2010`) for the five responses (`Poor` to `Excellent`) distribution among locations in NY State.
+
+```{r brfss_plot_2, fig.width = 8, fig.height = 6, dpi = 200, fig.align = 'center'}
+brfss %>% 
+    mutate(county = str_to_title(county)) %>% 
+    filter(
+        year %in% c(2006, 2010),
+        state == "NY") %>% 
+        group_by(year, county) %>%
+    ggplot(aes(x = response, y = data_value_pct, fill = county)) + 
+    geom_col(position = "dodge") + 
+    facet_grid(. ~ year) +
+    viridis::scale_fill_viridis(
+        option = "cividis",
+        name = "county",
+        discrete = TRUE) +
+    labs(
+        title = "Levels of 'Overall Health' Differences by NY County",
+        subtitle = "*Bronx, Erie, and Monroe counties included in 2010 only",
+        x = "Response Categories",
+        y = "Percentage of Sampled Individuals' Response Selection") +
+    theme(legend.position = "bottom")
+```
+
+It's important for us to note that Bronx, Erie, and Monroe counties were not included in the 2006 data. However, we see from 2006 to 2010, the rates of individuals indicating that they had `Very good` overall health rose significantly for all counties included in both years. This is especially evident for Westchester and Nassau counties.
 
 ***
 
