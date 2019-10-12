@@ -63,33 +63,58 @@ instacart %>%
             y = "Aisle")
 ```
 
+The following code chunk involves several steps, so I assigned it to its own tibble (`insta_top_product_tbl`). We sought to find the most ordered item from three specified aisles: `baking ingredients`, `dog food care`, and `packaged vegetables fruits`. As such, this particular code chunk merely prepares us for generating the required table.
 
-```{r table_popular_aisle_items, eval = FALSE}
-#WORKING CODE = NOT COMPLETED
-#Make a table showing the three most popular items in each of the aisles “baking ingredients”, “dog food care”, and “packaged vegetables fruits”. Include the number of times each item is ordered in your table.
-
-instacart %>% 
+```{r generate_top_product_tibble}
+#CODE CHUNK COMPLETED (TIME PERMITTING, SEE IF YOU CAN CLEAN IT UP A LITTLE)
+insta_top_product_tbl <-
+    instacart %>% 
+    select(aisle, product_name) %>% 
     filter(aisle == c("baking ingredients", "dog food care", "packaged vegetables fruits")) %>% 
     group_by(aisle, product_name) %>% 
-    select(aisle, product_name, everything()) %>% 
-    count(product_name)
+    mutate(product_count = n()) %>% 
+    arrange(aisle, desc(product_count)) %>%
+    distinct() %>% 
+    group_by(aisle) %>% 
+    filter(product_count == max(product_count))
+```
 
-    summarize(product_name = n()) %>% 
-    
-    group_by(product_name, aisle_count) %>% 
-    summarize(product_name) %>% 
+Now that we've generated our tibble with our desired specifications, we can write a short code to tidy up and neatly present our findings.
+
+```{r display_top_product_tibble_table}
+insta_top_product_tbl %>% 
+    mutate(product_name = str_to_lower(product_name)) %>% 
+    rename(
+        "Aisle" = aisle,
+        "Most Ordered Item" = product_name,
+        "Number of Times Ordered" = product_count) %>% 
+    knitr::kable()
+```
+
+STEPS (NOT IN ORDER):
+    Variables needed for this: product_name, order_dow, order_hour_of_day
+    GROUP BY 'order_dow' for the days of week
+    AS.FACTOR 'order_dow' / relevel the variable to be days of week
+    FILTER == "Pink Lady Apples" and "Coffee Ice Cream"
+    Calculate the mean value of 'hour_of"day'
+    CREATE knitr::kable table
+
+```{r}
+instacart %>% 
+    select(product_name, order_dow, order_hour_of_day) %>% 
+    filter(product_name %in% c("Pink Lady Apples", "Coffee Ice Cream")) %>% 
+    mutate(dow = wday(order_dow, label = TRUE, abbr = FALSE)) %>% 
+    group_by(product_name, dow) %>% 
+    arrange(product_name, dow) %>% 
+    select(product_name, dow, everything()) %>% 
+    summarize(mean(order_hour_of_day)) %>% 
     pivot_wider(
-        names_from = "aisle",
-        values_from = "aisle_count") %>% 
-    knitr::kable(align = 'c')
+        names_from = "dow",
+        values_from = "mean(order_hour_of_day)") %>% 
+    knitr::kable()
+    
 ```
 
-
-```{r TEST CODE, eval=FALSE}
-#Make a table showing the mean hour of the day at which Pink Lady Apples and Coffee Ice Cream are ordered on each day of the week; format this table for human readers (i.e. produce a 2 x 7 table).
-
-
-```
 
 
 ***
