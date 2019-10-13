@@ -246,7 +246,23 @@ It's important for us to note that Bronx, Erie, and Monroe counties were not inc
 
 ```{r import_data_accelerometer, message = FALSE}
 accel_data <- read_csv("./data/accel_data.csv")
-    
+```
+
+```{r}
+accel_data %>% 
+    pivot_longer(
+        activity.1:activity.1440,
+        names_to = "activity",
+        values_to = "activity_count") %>% 
+    mutate(
+        day_type = case_when(
+            day %in% c("Saturday", "Sunday") ~ "weekend",
+            TRUE ~ "weekday")) %>% 
+    group_by(day_id) %>% 
+    summarize(day_total = sum(activity_count)) %>% 
+    pivot_wider(
+        names_from = day_id,
+        values_from = day_total)
 ```
 
 ***
