@@ -87,7 +87,7 @@ insta_top_product_tbl <-
 
 Now that we've generated our tibble with our desired specifications, we can write a short code to tidy up and neatly present our findings.
 
-```{r display_top_product_tibble_table}
+```{r display_top_product_tibble_table, fig.align = "center"}
 insta_top_product_tbl %>% 
     mutate(product_name = str_to_lower(product_name)) %>% 
     rename(
@@ -121,6 +121,8 @@ instacart %>%
 ```
 
 Our findings are presented in 24-hour time, which is a terribly underutilized method of time keeping. There can never be any ambiguity! None of this, "I set my alarm for 7:00 p.m. instead of 7:00 a.m., and that's why I'm late for work" nonsense. 19:00 is 19:00. Bam! Anyway, I digress. Our data indicate that around the middle of the week customers tend to order `Coffee Ice Cream` around 15:00, whereas `Pink Lady Apples` are typically ordered around 11:00 during the week.
+
+*Note: Unfortunately, I could not figure out how to display the times as either `13:00` or `13:26`. I simply couldn't devote any more time to fixing this one minor issue.*
 
 ***
 
@@ -241,13 +243,21 @@ It's important for us to note that Bronx, Erie, and Monroe counties were not inc
 ###### (*25 points*)
 ##### *Exploration of Accelerometer Data from a 63 Year-Old Male with BMI 25*
 
+The following problem deals with the tidying and wrangling of an extremely **wide** dataset. First, we will import the `accel_data.csv` file from our `data` subfolder.
+
 ```{r import_data_accelerometer, message = FALSE}
 accel_data <- read_csv("./data/accel_data.csv")
 ```
 
-```{r tidy_and_wrangle_accel_data, eval = FALSE}
-#THIS CODE CHUNK IS A WORK IN PROGRESS (AS OF 2019-10-13 10:02)
-accel_data %>% 
+***
+
+Now that we've imported the dataset, we can see that there are `r ncol(accel_data)` variables and only `r nrow(accel_data)` rows. But this is just poor data management. So, let's get this tidy!  
+
+The following code chunk drastically tidys and wrangles our accelerometer data into a neat dataset. 
+
+```{r tidy_and_wrangle_accel_data}
+tidy_accel <-
+    accel_data %>% 
     pivot_longer(
         activity.1:activity.1440,
         names_to = "activity",
@@ -255,13 +265,60 @@ accel_data %>%
     mutate(
         day_type = case_when(
             day %in% c("Saturday", "Sunday") ~ "weekend",
-            TRUE ~ "weekday")) %>% 
-    group_by(day_id) %>% 
-    summarize(day_total = sum(activity_count)) %>% 
-    pivot_wider(
-        names_from = day_id,
-        values_from = day_total)
+            TRUE ~ "weekday"),
+        day = fct_relevel(day, c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")))
+
+tidy_accel
 ```
+
+That's better!  We made the following changes to our raw data:  
+
+1. We created a new variable `day_type` that indicates whether the observation falls on a `weekday` or `weekend`.  
+1. We converted our `day` character variable to a factor variable with ordered levels (M/T/W/Th/F).  
+1. We pivoted the dataset to be longer; this resulted in a dataset with `r ncol(tidy_accel)` variables and `r nrow(tidy_accel)` rows.  
+
+***
+
+Using our tidy dataset (`tidy_accel`) we can generate a neat table for scrutiny. What we see is the total measured amount of **activity counts** by the 63 year-old male in question stratified by both week number and the day of each week.  
+
+```{r generate_activity_count_table}
+tidy_accel %>% 
+    group_by(week, day) %>% 
+    summarize(day_total = sum(activity_count)) %>% 
+    mutate(day_total = round(day_total, digits = 0)) %>% 
+    pivot_wider(
+        names_from = day,
+        values_from = day_total) %>% 
+    rename("Week" = week) %>% 
+    knitr::kable(align = 'c')
+```
+
+We observe some minor trends with the table results. For instance, the last two weekends of the five week observation period showed much lower activity counts than in previous weeks and weekends. Furthermore, the middle days of the week (`Tuesday`, `Wednesday`, and `Thursday`) on average showed less activity counts than other days of the week. This is especially true in Weeks `1` and `3`.  
+
+***
+
+Next, let's graph a time plot of all the activity metrics across each day of the week by the minute.  
+
+```{r generate_activity_count_plot, fig.width = 8, fig.height = 6, dpi = 200, fig.align = 'center'}
+tidy_accel %>% 
+    mutate(min_of_day = as.integer(str_sub(activity, 10, -1))) %>% 
+    ggplot(aes(x = min_of_day, y = activity_count, color = day)) +
+    geom_line() +
+    scale_x_continuous(
+        breaks = c(0, 360, 720, 1080, 1440),
+        labels = c("00:00", "06:00", "12:00", "18:00", "23:59")) +
+    labs(
+        title = "Level of Activity by the Minute",
+        subtitle = "Stratified by Day of the Week",
+        x = "Time of Day",
+        y = "Level of Activity") +
+    viridis::scale_color_viridis(
+        name = "Day of the Week", 
+        discrete = TRUE) +
+    theme(legend.position = "bottom")
+```
+
+We can see from this terribly busy graphic that our patient had increased activity on Sunday around 11:00, and on Friday and Saturday in the later hours of ~ 20:00 to 22:00. So, we may conclude that this individual likes to get his early-evening party on during the weekend, and then go work off all the beer on Sunday at the gym. But, that's just my own theory based on this data.  
 
 ***
 
