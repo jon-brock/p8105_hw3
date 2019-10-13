@@ -248,7 +248,8 @@ It's important for us to note that Bronx, Erie, and Monroe counties were not inc
 accel_data <- read_csv("./data/accel_data.csv")
 ```
 
-```{r}
+```{r tidy_and_wrangle_accel_data, eval = FALSE}
+#THIS CODE CHUNK IS A WORK IN PROGRESS (AS OF 2019-10-13 10:02)
 accel_data %>% 
     pivot_longer(
         activity.1:activity.1440,
